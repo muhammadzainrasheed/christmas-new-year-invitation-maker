@@ -4,3 +4,6 @@ dist/
 node_modules/
 .dev.vars
 .env
+public/assets/*.webp
+public/assets/*.jpg
+public/assets/*.woff
