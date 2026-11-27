@@ -7,6 +7,9 @@ async function api(url,data=null,key=null){const headers={};if(data)headers['Con
  let r;try{r=await fetch(url,{method:data?'POST':'GET',headers,body:data?JSON.stringify(data):undefined,cache:'no-store'});}catch{throw Error('Connection lost. Check your internet and try again.');}
  let b;try{b=await r.json();}catch{throw Error('The service is temporarily unavailable. Try again in a moment.');}if(!r.ok){const ex=Error(b.error||'Please try again.');ex.fields=b.fields;throw ex;}return b;}
 async function copy(value,input){try{await navigator.clipboard.writeText(value);return 'Link copied.';}catch{input.focus();input.select();try{if(document.execCommand('copy'))return 'Link copied.';}catch{}return 'Link selected. Choose Copy from your device menu.';}}
+const pagesBase=document.documentElement.dataset.pagesBase;
+const pages=pagesBase?await import('./pages-client.js'):null;
+if(pages)await pages.setupPages(pagesBase,copy);
 if($('menu-toggle')){const button=$('menu-toggle'),menu=$('mobile-menu');function close(){menu.hidden=true;button.setAttribute('aria-expanded','false');button.setAttribute('aria-label','Open menu');}
  button.onclick=()=>{const open=menu.hidden;menu.hidden=!open;button.setAttribute('aria-expanded',String(open));button.setAttribute('aria-label',open?'Close menu':'Open menu');};menu.addEventListener('click',close);addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!menu.hidden){close();button.focus();}});matchMedia('(min-width:761px)').addEventListener('change',close);}
 const dateLabel=date=>{if(!date)return '';const t=new Date(date+'T12:00:00Z');return Number.isFinite(+t)?t.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}):'';};
@@ -23,7 +26,9 @@ if($('create-form')){
  form.onsubmit=async ev=>{ev.preventDefault();const d=current(),bad={};for(const k of fields){if(!d[k])bad[k]=({host:'Enter the host name.',title:'Enter an event title.',date:'Choose an event date.',time:'Choose a start time.',venue:'Enter your venue and address.',message:'Write a short invitation message.',zone:'Choose a time zone.'})[k];}
  if(d.date&&d.date<$('date').min)bad.date='Choose a date in the future.';errors(bad);if(Object.keys(bad).length){$(Object.keys(bad)[0]).focus();$('create-status').textContent='Check the highlighted fields.';return;}
  const btn=form.querySelector('button[type=submit]');btn.disabled=true;$('create-status').textContent='Creating your invitation…';
- try{let attempt;try{attempt=JSON.parse(store('everpost-create','null'));}catch{}const fingerprint=JSON.stringify(d);if(!attempt||attempt.fingerprint!==fingerprint){attempt={id:rid(),key:[...crypto.getRandomValues(new Uint8Array(32))].map(x=>x.toString(16).padStart(2,'0')).join(''),fingerprint};keep('everpost-create',JSON.stringify(attempt));}
+ try{if(pages){
+ const share=pages.createLink(pagesBase,d);keep('everpost-draft','{}');location.assign(share);return;
+ }let attempt;try{attempt=JSON.parse(store('everpost-create','null'));}catch{}const fingerprint=JSON.stringify(d);if(!attempt||attempt.fingerprint!==fingerprint){attempt={id:rid(),key:[...crypto.getRandomValues(new Uint8Array(32))].map(x=>x.toString(16).padStart(2,'0')).join(''),fingerprint};keep('everpost-create',JSON.stringify(attempt));}
  const {slug}=await api('/api/invitations',{...d,id:attempt.id,key:attempt.key});keep('everpost-draft','{}');keep('everpost-create','null');location.assign('/host/'+slug+'#key='+attempt.key);
  }catch(ex){errors(ex.fields);if(ex.fields)$(Object.keys(ex.fields)[0])?.focus();$('create-status').textContent=ex.message;btn.disabled=false;}};
 }
@@ -45,6 +50,7 @@ if($('host-panel')){
 }
 if($('event-data')){
  const d=JSON.parse($('event-data').textContent),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(pages)await pages.enableCalendar(d);
  const stamp=t=>new Date(t).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
  $('google-cal').href='https://calendar.google.com/calendar/render?'+new URLSearchParams({action:'TEMPLATE',text:d.title,dates:stamp(d.instant)+'/'+stamp(d.instant),ctz:d.zone,location:d.venue,details:d.message});
  function tick(){const n=Math.max(0,Math.floor((Date.parse(d.instant)-Date.now())/1000));[Math.floor(n/86400),Math.floor(n/3600)%24,Math.floor(n/60)%60,n%60].forEach((x,k)=>{$('count-'+k).textContent=String(x).padStart(2,'0');});if(!n)$('count-note').textContent='The celebration has begun.';}
@@ -56,7 +62,7 @@ if($('event-data')){
  addEventListener('pagehide',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden&&music)stop();});
  const rsvp=$('rsvp-form');rsvp.addEventListener('change',()=>{const no=rsvp.elements.attending.value==='no';$('guests').disabled=no;$('guests').closest('.field').hidden=no;});
  for(const [id,kind] of [['rsvp-form','rsvp'],['wish-form','wish']]){const form=$(id);form.onsubmit=async ev=>{ev.preventDefault();const btn=form.querySelector('button'),status=form.querySelector('.status');btn.disabled=true;const body=kind==='rsvp'?{name:$('guest-name').value.trim(),attending:form.elements.attending.value,guests:Number($('guests').value)}:{name:$('wish-name').value.trim(),message:$('wish').value.trim()};
- try{if(!body.name||kind==='wish'&&!body.message)throw Error('Enter your name and fill in the required fields.');if(!d.demo)await api('/api/guest/'+d.slug+'/'+kind,{...body,id:stableId('everpost-'+d.slug+'-'+kind)});
+ try{if(!body.name||kind==='wish'&&!body.message)throw Error('Enter your name and fill in the required fields.');if(pages&&!d.demo){pages.prepareReply(form,d,body,copy);if(kind==='rsvp'&&!$('wish-name').value)$('wish-name').value=body.name;return;}if(!d.demo)await api('/api/guest/'+d.slug+'/'+kind,{...body,id:stableId('everpost-'+d.slug+'-'+kind)});
  status.textContent=d.demo?'Sample '+(kind==='rsvp'?'RSVP':'wish')+' received in this tab.':kind==='rsvp'?'Thank you. Your host can now see your RSVP.':'Your wish has been sent to the host.';if(kind==='rsvp'&&!$('wish-name').value)$('wish-name').value=body.name;}catch(ex){status.textContent=ex.message;}finally{btn.disabled=false;}};}
 }
 if($('contact-form')){const form=$('contact-form');let id=rid();form.onsubmit=async ev=>{ev.preventDefault();const b=form.querySelector('button'),status=form.querySelector('.status');b.disabled=true;try{const r=await api('/api/contact',{id,email:$('email').value,message:$('support-message').value});status.textContent='Message received. Your reference is '+r.ticket+'.';form.reset();id=rid();}catch(ex){status.textContent=ex.message;}finally{b.disabled=false;}};}

@@ -1,6 +1,16 @@
 # Everpost — Christmas and New Year invitation maker
 
-Everpost lets a host personalise one holiday card, send a guest link and read RSVPs and wishes from a separate private link. No account is needed. The single design in this release is **The Evergreen Letter**.
+Everpost lets a host personalise a holiday card, send one guest link and receive replies. On the public GitHub Pages edition, guests can send their RSVPs and wishes by WhatsApp or copy them into a direct message. No account is needed. The single design in this release is **The Evergreen Letter**.
+
+## Public GitHub Pages edition
+
+The new site publishes at [Everpost on GitHub Pages](https://muhammadzainrasheed.github.io/christmas-new-year-invitation-maker/). GitHub serves the checked-in static files from the root of `main`. There is no external hosting or database connection on this edition.
+
+Use **Create my invitation**, enter the details, and copy the generated guest link. Hosts may add their WhatsApp number before sharing. The invitation details travel in the URL fragment, so the link works on a fresh device without an account. Guests prepare a reply, then send it in WhatsApp or copy it into their own message. The host reads replies in that conversation. The social preview uses the common Everpost image and title. A specific invitation's details become visible when the guest opens it.
+
+To publish an update, edit the source files, run `npm run build:pages` and `npm test`, then commit the updated source and generated HTML/assets to `main`. The default build targets this repository's project URL. To generate a copy for another project, set `PAGES_URL` and optionally `PAGES_OUTPUT`. For the static site, the public routes include `/invite/` and `/share/` under the project path.
+
+The sections below document the optional server-backed edition for developers. The GitHub Pages deployment works independently of that edition.
 
 ## Run it
 
@@ -31,7 +41,7 @@ npm run build
 
 The host may enable call and WhatsApp buttons after creating the invitation. A number must include its country code. The programme uses the host’s actual start time and event message. A guest can change a reply from the same tab. A separate device can send a fresh reply. PNGs are 1500 × 2100 pixels. Files for Apple Calendar and Outlook use UTC and escape invitation text. Google Calendar uses the same instant. If clocks move backwards, the editor uses the first occurrence of a repeated local time. Times skipped by daylight saving are rejected.
 
-## Publish from GitHub to Cloudflare Pages
+## Optional server deployment reference
 
 The handoff branch is `everpost-v1` in `muhammadzainrasheed/christmas-new-year-invitation-maker`. The repository owner controls the GitHub and Cloudflare accounts.
 

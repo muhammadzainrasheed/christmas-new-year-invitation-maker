@@ -1,7 +1,7 @@
 // Canvas uses the same illustration, fonts, wording and palette as the HTML card.
 export async function cardPNG(event,slug){
  await Promise.all([document.fonts.load('italic 80px "DM Serif Text"'),document.fonts.load('36px "DM Sans"')]);
- const image=new Image();image.src='/assets/evergreen-wreath.webp';await image.decode();
+ const image=new Image();image.src=new URL('./evergreen-wreath.webp',import.meta.url).href;await image.decode();
  const cv=document.createElement('canvas');cv.width=1500;cv.height=2100;const c=cv.getContext('2d');
  const groups=[
   ['YOU’RE INVITED TO',29,'DM Sans','#655748',false,35],

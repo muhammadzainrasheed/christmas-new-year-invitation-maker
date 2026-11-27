@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://muhammadzainrasheed.github.io/christmas-new-year-invitation-maker/sitemap.xml

@@ -1,3 +1,4 @@
+import {calendarFile as calendar} from './calendar.mjs';
 import {render,publicPages} from './pages.mjs';
 import {design,sample,escapeHtml as e} from './design.mjs';
 import {wallInstant} from './time.mjs';
@@ -19,11 +20,6 @@ function validEvent(b){
   if(event.date&&event.time&&event.zone){event.instant=wallInstant(event.date,event.time,event.zone);if(!event.instant)fields.time='Choose a valid date and time in this time zone.';else if(Date.parse(event.instant)<=Date.now())fields.date='Choose a date and time in the future.';}
   return {event,fields};
 }
-const escCal=s=>String(s).replaceAll('\\','\\\\').replace(/\r\n|\r|\n/g,'\\n').replaceAll(',','\\,').replaceAll(';','\\;');
-const stamp=t=>new Date(t).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
-function fold(line){let out='',bytes=0;for(const c of line){const n=new TextEncoder().encode(c).length;if(bytes+n>75){out+='\r\n ';bytes=1;}out+=c;bytes+=n;}return out;}
-function calendar(d,origin,slug){const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Everpost//Holiday Invitations//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT','UID:'+slug+'@'+new URL(origin).host,'DTSTAMP:'+stamp(Date.now()),'DTSTART:'+stamp(d.instant),'SUMMARY:'+escCal(d.title),'LOCATION:'+escCal(d.venue),'DESCRIPTION:'+escCal(d.message),'END:VEVENT','END:VCALENDAR'];
-return new Response(lines.map(fold).join('\r\n')+'\r\n',{headers:{'content-type':'text/calendar; charset=utf-8','content-disposition':'attachment; filename="everpost-invitation.ics"','cache-control':'no-store'}});}
 async function readJSON(req){if(!req.headers.get('content-type')?.startsWith('application/json'))return null;const reader=req.body?.getReader();if(!reader)return null;let size=0;const chunks=[];while(true){const r=await reader.read();if(r.done)break;size+=r.value.length;if(size>12000){await reader.cancel();return null;}chunks.push(r.value);}try{const b=JSON.parse(await new Blob(chunks).text());return b&&typeof b==='object'&&!Array.isArray(b)?b:null;}catch{return null;}}
 export async function handle(request,db,assets,options={}){
  const url=new URL(request.url),origin=options.origin||url.origin,p=url.pathname.replace(/\/$/,'')||'/',method=request.method;

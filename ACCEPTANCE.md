@@ -1,6 +1,10 @@
 # Acceptance and SEO record
 
-## Functional checks
+## GitHub Pages edition
+
+The repository's GitHub Pages source is the root of `main`. The site ships prebuilt. The Pages-specific tests cover standalone Unicode invite links, invalid or truncated payloads, future dates, RSVP and wish text, calendar export and repository-relative links. Replies are delivered through the guest's own messaging app. Automatic aggregation and stored support messages apply to the server-backed edition only. Actual delivery to a WhatsApp recipient depends on the guest confirming Send.
+
+## Server-backed reference checks
 
 | Test | Result |
 | --- | --- |
