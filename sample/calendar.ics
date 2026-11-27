@@ -1,0 +1,15 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Everpost//Holiday Invitations//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:sample@muhammadzainrasheed.github.io
+DTSTAMP:20261127T155526Z
+DTSTART:20261224T183000Z
+SUMMARY:Christmas Dinner
+LOCATION:Somerset House\, Strand\, London
+DESCRIPTION:Come in from the cold for a candlelit evening of good food\, fa
+ miliar faces and a little Christmas cheer.
+END:VEVENT
+END:VCALENDAR
