@@ -10,11 +10,12 @@ process.chdir(root);await unpack();
 await mkdir('.data',{recursive:true});
 const sqlite=new DatabaseSync(process.env.EVERPOST_DB||'.data/everpost.sqlite');sqlite.exec(await readFile('schema.sql','utf8'));
 const db={prepare(query){return {bind(...params){const s=sqlite.prepare(query);return {first:()=>s.get(...params),all:()=>({results:s.all(...params)}),run:()=>s.run(...params)};}};}};
-const mime={'.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.webp':'image/webp','.svg':'image/svg+xml','.jpg':'image/jpeg','.woff':'font/woff'};
-const asset=async req=>{const pathname=new URL(req.url).pathname;if(!/^\/assets\/[a-z0-9.-]+$/.test(pathname))return new Response(null,{status:404});try{return new Response(await readFile(path.join(root,'public',pathname)),{headers:{'content-type':mime[path.extname(pathname)]||'application/octet-stream','cache-control':'public,max-age=3600'}});}catch{return new Response('File not found',{status:404});}};
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.webp':'image/webp','.svg':'image/svg+xml','.jpg':'image/jpeg','.woff':'font/woff'};
+const asset=async req=>{const pathname=new URL(req.url).pathname;if(!/^\/assets\/[a-z0-9.-]+$/.test(pathname))return new Response(null,{status:404});try{return new Response(await readFile(path.join(root,'public',pathname)),{headers:{'content-type':mime[path.extname(pathname)]||'application/octet-stream','cache-control':'no-cache'}});}catch{return new Response('File not found',{status:404});}};
 const server=http.createServer(async(req,res)=>{try{
   const origin=process.env.PUBLIC_ORIGIN||'http://'+req.headers.host;
   const options={method:req.method,headers:req.headers};if(!['GET','HEAD'].includes(req.method))Object.assign(options,{body:req,duplex:'half'});
   const response=await handle(new Request(new URL(req.url,origin),options),db,asset,{origin,ip:req.socket.remoteAddress});res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));
 }catch(err){console.error('Request failed:',err.name);res.writeHead(503,{'content-type':'text/plain'});res.end('Everpost is temporarily unavailable. Please try again.');}});
-const port=Number(process.env.PORT||5173);server.listen(port,'0.0.0.0',()=>console.log('Everpost running on http://localhost:'+port));
+const arg=(name)=>{const i=process.argv.indexOf(name);return i<0?null:process.argv[i+1];};
+const port=Number(arg('--port')||process.env.PORT||5173);server.listen(port,arg('--host')||'0.0.0.0',()=>console.log('Everpost running on http://localhost:'+port));
